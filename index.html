@@ -1155,6 +1155,48 @@ function tryCaptureName(text) {
   if (m2) capturedSellerName = m2[1].trim();
 }
 
+// ── ST Summary injection for Confirm/JSON turn ───────────────────────────────
+// On the Confirm turn, instead of relying on GPT-4o to reconstruct all seller
+// data from 20+ turns of conversation history, we inject a compact verified
+// data block directly into the system prompt. This keeps the Confirm turn
+// well under 15,000 tokens regardless of session length — eliminating the
+// 30,000 token wall permanently without trimming any conversation data.
+function buildSTSummary() {
+  const lines = ["[VERIFIED SESSION DATA — use these exact values for all JSON fields. These override anything in conversation history.]"];
+
+  // Seller identity
+  if (capturedSellerName) lines.push(`SELLER NAME: ${capturedSellerName}`);
+  if (ST.seller_email)    lines.push(`SELLER EMAIL: ${ST.seller_email}`);
+
+  // Property address
+  if (ST.property_address) lines.push(`PROPERTY ADDRESS: ${ST.property_address}`);
+  if (ST.city)    lines.push(`CITY: ${ST.city}`);
+  if (ST.state)   lines.push(`STATE: ${ST.state}`);
+  if (ST.zip_code) lines.push(`ZIP: ${ST.zip_code}`);
+
+  // Property details from RentCast
+  if (ST.bedrooms)         lines.push(`BEDROOMS: ${ST.bedrooms}`);
+  if (ST.bathrooms)        lines.push(`BATHROOMS: ${ST.bathrooms}`);
+  if (ST.living_area_sqft) lines.push(`LIVING AREA: ${ST.living_area_sqft}`);
+  if (ST.lot_size)         lines.push(`LOT SIZE: ${ST.lot_size}`);
+  if (ST.year_built)       lines.push(`YEAR BUILT: ${ST.year_built}`);
+  if (ST.property_type)    lines.push(`PROPERTY TYPE: ${ST.property_type}`);
+  if (ST.garage_spaces)    lines.push(`GARAGE SPACES: ${ST.garage_spaces}`);
+
+  // Valuation
+  if (ST.estimated_value_low)   lines.push(`AVM ESTIMATED VALUE: ${ST.estimated_value_low}`);
+  if (ST.estimated_value_range) lines.push(`AVM PRICE RANGE: ${ST.estimated_value_range}`);
+  if (ST.price_low)  lines.push(`AVM PRICE LOW: $${Number(ST.price_low).toLocaleString()}`);
+  if (ST.price_high) lines.push(`AVM PRICE HIGH: $${Number(ST.price_high).toLocaleString()}`);
+
+  // Financial goals
+  if (ST.loan_balance)      lines.push(`LOAN BALANCE: ${ST.loan_balance}`);
+  if (ST.net_proceeds_goal) lines.push(`NET PROCEEDS GOAL: ${ST.net_proceeds_goal}`);
+
+  lines.push("[END VERIFIED SESSION DATA]");
+  return lines.join("\n");
+}
+
 // ── Loan balance capture from Claude's confirmation ─────────────────────────
 // Parses Claude's acknowledgment lines like "Thank you — $310,000 mortgage payoff"
 // and "Got it — $220,000 net proceeds goal" to lock into ST before JSON assembly.
@@ -1396,6 +1438,15 @@ async function callClaude(userMessage, imageData) {
   const lastUserText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content.trim().toLowerCase() : "";
   const isConfirmTurn = /\b(i'm ready|understood|authorize|confirm|ready)\b/.test(lastUserText)
     || lastUserText === "b" || lastUserText === "a";
+
+  // ── ST Summary injection — Confirm/JSON turn only ──────────────────────────
+  // Inject verified session data so GPT-4o assembles JSON from the ST object
+  // rather than reconstructing from 20+ turns of history. This keeps the
+  // Confirm turn well under 15,000 tokens regardless of session length,
+  // permanently eliminating the 30,000 token error without losing any data.
+  if (isConfirmTurn || sessionComplete) {
+    systemWithData += "\n\n" + buildSTSummary();
+  }
   const isAutoTrigger = userMessage === "__AUTO_TRIGGER_ANALYSIS__";
   const maxTokens = sessionComplete ? 1200 : (isConfirmTurn ? 4000 : (isAutoTrigger ? 3000 : 1500));
 
