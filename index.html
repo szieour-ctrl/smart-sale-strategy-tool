@@ -907,7 +907,9 @@ function addMessage(role, text) {
     .replace(/>/g,"&gt;")
     .replace(/\n/g,"<br>")
     .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-    .replace(/__(.*?)__/g,"<b>$1</b>");
+    .replace(/__(.*?)__/g,"<b>$1</b>")
+    .replace(/^##\s(.+)/gm,"<div style='font-size:1.08em;font-weight:700;margin:6px 0 4px;'>$1</div>")
+    .replace(/---/g,"<hr style='border:none;border-top:1px solid rgba(0,0,0,0.12);margin:8px 0;'>");
   const wrap = document.createElement("div");
   wrap.style.cssText = "max-width:80%;min-width:0;flex:1;";
   wrap.appendChild(bubble);
@@ -944,7 +946,9 @@ function typewriteMessage(text, speedMs = 18) {
     .replace(/>/g,"&gt;")
     .replace(/\n/g,"<br>")
     .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-    .replace(/__(.*?)__/g,"<b>$1</b>");
+    .replace(/__(.*?)__/g,"<b>$1</b>")
+    .replace(/^##\s(.+)/gm,"<div style='font-size:1.08em;font-weight:700;margin:6px 0 4px;'>$1</div>")
+    .replace(/---/g,"<hr style='border:none;border-top:1px solid rgba(0,0,0,0.12);margin:8px 0;'>");
 
   // Split into HTML-aware chunks (preserve tags, type char by char for text)
   let i = 0;
