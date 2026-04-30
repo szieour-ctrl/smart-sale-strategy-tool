@@ -1,0 +1,16 @@
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[functions."claude"]
+  timeout = 30
+
+[functions."rentcast"]
+  timeout = 20
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
