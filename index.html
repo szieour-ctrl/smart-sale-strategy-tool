@@ -505,7 +505,7 @@ estimated_net: sale_price minus selling_costs
 seller_walk_away: estimated_net minus loan_balance (leave blank if no loan_balance provided)
 commission_range: "$XX,XXX – $XX,XXX" (5–6%)
 closing_cost_range: "$X,XXX – $XX,XXX" (1–2%)
-repair_range: Good="$0–$2,500" | Average="$2,500–$7,500" | Dated="$5,000–$15,000" | Distressed="$10,000–$25,000"
+repair_range: Good="$0-$2,500" | Average="$2,500-$7,500" | Dated="$5,000-$15,000" | Distressed="$10,000-$25,000"
 
 JSON OUTPUT RULES
 Currency: "$875,000" | Measurements: "2,150 sq ft" | Ranges: "$XXX,XXX – $XXX,XXX" en-dash
@@ -746,6 +746,8 @@ const ST = {
   year_built: "", garage_spaces: "", property_type: "",
   estimated_value_low: "", estimated_value_range: "",
   price_low: "", price_high: "",
+  loan_balance: "", net_proceeds_goal: "",
+  smart_sale_score: "", score_tier: "",
   agent_name: "Sam Zieour", brokerage: "SZ Real Estate Group",
   agent_logo: "", property_image: ""
 };
@@ -835,6 +837,9 @@ function mergeSessionData(payload) {
   // Safety net: restore loan fields captured from conversation if Claude dropped them
   if (ST.loan_balance && !payload.loan_balance)           payload.loan_balance      = ST.loan_balance;
   if (ST.net_proceeds_goal && !payload.net_proceeds_goal) payload.net_proceeds_goal = ST.net_proceeds_goal;
+  // Safety net: restore smart_sale_score and score_tier if Claude dropped them
+  if (ST.smart_sale_score && !payload.smart_sale_score)   payload.smart_sale_score  = ST.smart_sale_score;
+  if (ST.score_tier && !payload.score_tier)               payload.score_tier        = ST.score_tier;
   payload.agent_name = "Sam Zieour";
   payload.brokerage  = "SZ Real Estate Group";
   payload.session_completed = "true";
@@ -1167,10 +1172,12 @@ function tryCaptureName(text) {
 // Parses Claude's acknowledgment lines like "Thank you — $310,000 mortgage payoff"
 // and "Got it — $220,000 net proceeds goal" to lock into ST before JSON assembly.
 function tryCaptureLoanData(text) {
-  // Loan balance: "Thank you — $310,000 mortgage payoff" or "$310K mortgage payoff captured"
+  // Loan balance — catches multiple confirmation patterns GPT-4o uses
   if (!ST.loan_balance) {
     const loanMatch = text.match(/\$([0-9,]+(?:\.[0-9]+)?)[Kk]?\s*(?:mortgage payoff|loan payoff|payoff captured)/i)
-      || text.match(/mortgage payoff[^$]*\$([0-9,]+)/i);
+      || text.match(/mortgage payoff[^$]*\$([0-9,]+)/i)
+      || text.match(/payoff of \$([0-9,]+)/i)
+      || text.match(/(?:mortgage|loan) payoff[^.]*\$([0-9,]+)/i);
     if (loanMatch) {
       let raw = loanMatch[1].replace(/,/g, "");
       const val = parseFloat(raw);
@@ -1179,11 +1186,24 @@ function tryCaptureLoanData(text) {
         console.log("Loan balance captured from Claude response:", ST.loan_balance);
       }
     }
-    // Also catch "310,000 mortgage payoff" pattern
+    // Catch "310,000 mortgage payoff" pattern
     const loanMatch2 = text.match(/([0-9]{3},[0-9]{3})\s*mortgage payoff/i);
     if (!ST.loan_balance && loanMatch2) {
       ST.loan_balance = "$" + loanMatch2[1];
       console.log("Loan balance captured (pattern 2):", ST.loan_balance);
+    }
+    // Catch simple "Thank you — $190,000 noted" ONLY when net_proceeds_goal not yet captured
+    // (avoids false matches on goal confirmation which comes immediately after)
+    if (!ST.loan_balance && !ST.net_proceeds_goal) {
+      const simpleMatch = text.match(/(?:thank you|got it)[^$]*\$([0-9,]+(?:\.[0-9]+)?)[Kk]?\s*noted/i);
+      if (simpleMatch) {
+        let raw = simpleMatch[1].replace(/,/g, "");
+        const val = parseFloat(raw);
+        if (val > 10000 && val < 5000000) {
+          ST.loan_balance = "$" + Math.round(val).toLocaleString();
+          console.log("Loan balance captured (simple noted):", ST.loan_balance);
+        }
+      }
     }
   }
   // Net proceeds goal: "Got it — $220,000 net proceeds goal"
@@ -1449,6 +1469,21 @@ async function callClaude(userMessage, imageData) {
   tryCaptureGarage(assistantText);
   tryCaptureLoanData(assistantText);
 
+  // ── Smart Sale Score capture — locks value from S13 analysis response ───
+  // Score is calculated silently by GPT-4o in S13 and appears in the JSON.
+  // We also watch for it in Claude's response text as a backup.
+  if (!ST.smart_sale_score) {
+    const scoreMatch = assistantText.match(/smart sale score[^0-9]*([0-9]{1,3})/i)
+      || assistantText.match(/score[^0-9]*:\s*([0-9]{1,3})/i);
+    if (scoreMatch) {
+      const score = parseInt(scoreMatch[1]);
+      if (score >= 0 && score <= 100) {
+        ST.smart_sale_score = String(score);
+        console.log("Smart Sale Score captured from response:", ST.smart_sale_score);
+      }
+    }
+  }
+
   // ── Analysis delivery detection ────────────────────────────────────────
   if (!analysisDelivered && /\U0001f3e0.*Cash Offer|\U0001f3e1.*Sell As-Is/i.test(assistantText)) {
     analysisDelivered = true;
@@ -1531,9 +1566,11 @@ async function callClaude(userMessage, imageData) {
   if(rawJson && !sessionComplete) {
     try {
       let payload = JSON.parse(rawJson);
-      // Lock loan fields from JSON into ST immediately
+      // Lock loan fields and score from JSON into ST immediately
       if (payload.loan_balance)      ST.loan_balance      = payload.loan_balance;
       if (payload.net_proceeds_goal) ST.net_proceeds_goal = payload.net_proceeds_goal;
+      if (payload.smart_sale_score)  ST.smart_sale_score  = payload.smart_sale_score;
+      if (payload.score_tier)        ST.score_tier        = payload.score_tier;
       if(payload.seller_name || payload.seller_email) {
         // Override hallucinated fields with real tracked data
         payload = mergeSessionData(payload);
