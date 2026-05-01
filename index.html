@@ -834,9 +834,11 @@ function mergeSessionData(payload) {
   if (ST.estimated_value_range) payload.estimated_value_range = ST.estimated_value_range;
   if (capturedSellerName)  payload.seller_name = capturedSellerName;
   if (ST.seller_email)     payload.seller_email = ST.seller_email;
-  // Safety net: restore loan fields captured from conversation if Claude dropped them
-  if (ST.loan_balance && !payload.loan_balance)           payload.loan_balance      = ST.loan_balance;
-  if (ST.net_proceeds_goal && !payload.net_proceeds_goal) payload.net_proceeds_goal = ST.net_proceeds_goal;
+  // ST values are ground truth — always override payload for these fields.
+  // GPT-4o can hallucinate loan_balance (e.g. $337K → $325K). ST captured
+  // the real value directly from the conversation, so ST always wins.
+  if (ST.loan_balance)      payload.loan_balance      = ST.loan_balance;
+  if (ST.net_proceeds_goal) payload.net_proceeds_goal = ST.net_proceeds_goal;
   // Safety net: restore smart_sale_score and score_tier if Claude dropped them
   if (ST.smart_sale_score && !payload.smart_sale_score)   payload.smart_sale_score  = ST.smart_sale_score;
   if (ST.score_tier && !payload.score_tier)               payload.score_tier        = ST.score_tier;
@@ -1566,9 +1568,11 @@ async function callClaude(userMessage, imageData) {
   if(rawJson && !sessionComplete) {
     try {
       let payload = JSON.parse(rawJson);
-      // Lock loan fields and score from JSON into ST immediately
-      if (payload.loan_balance)      ST.loan_balance      = payload.loan_balance;
-      if (payload.net_proceeds_goal) ST.net_proceeds_goal = payload.net_proceeds_goal;
+      // Lock loan fields and score from JSON into ST — but ONLY if ST doesn't already
+      // have a value captured from the conversation. ST values are ground truth;
+      // JSON values can be hallucinated by GPT-4o (e.g. $337K → $325K).
+      if (payload.loan_balance && !ST.loan_balance)      ST.loan_balance      = payload.loan_balance;
+      if (payload.net_proceeds_goal && !ST.net_proceeds_goal) ST.net_proceeds_goal = payload.net_proceeds_goal;
       if (payload.smart_sale_score)  ST.smart_sale_score  = payload.smart_sale_score;
       if (payload.score_tier)        ST.score_tier        = payload.score_tier;
       if(payload.seller_name || payload.seller_email) {
