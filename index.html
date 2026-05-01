@@ -414,36 +414,20 @@ Store: smart_sale_score | score_tier (exact label)
 S14 — TEMPERATURE CHECK
 "How does that compare to what you were expecting, [First]? A) About what I expected  B) Higher  C) Lower  D) I have questions first"
 Store: seller_temperature (letter only)
-
-INCOMING S14 REPLY HANDLER — When the seller replies with A, B, C, D, or any close variant (lowercase, "option a", "about what I expected", etc.), that IS their temperature answer. Deliver the exact reply below, then IMMEDIATELY deliver S15 in the SAME response. Do NOT stop. Do NOT ask follow-up questions. Do NOT wait for another input. S15 is MANDATORY after every S14 reply.
-
 A: "Good to hear — the analysis lines up with your sense of the market."
 B: "Great — the updates and conditions are working in your favor."
 C: "The ranges reflect current conditions and the home's profile. Targeted prep often moves you toward the higher end."
-D: ask one question → answer 2–4 sentences → "Sam can go deeper when he follows up." → deliver S15 in same response.
-
-MANDATORY: After A, B, or C reply → continue directly into S15. No pause. No stop. S15 follows immediately.
+D: ask one question → answer 2–4 sentences → "Sam can go deeper when he follows up." → proceed to S15 in same response.
+Then proceed to S15.
 
 S15 — PLAYBOOK OFFER
----
-## 🎁 You Qualify for a Personalized Market-Ready Playbook™
+"Based on everything you've shared, [First] — we can put together a Personalized Market-Ready Playbook™ for your home.
 
-**[First], based on everything you've shared — we can put together a custom Playbook for your home at no cost.**
-
-Here's what's inside:
-
-🏠 **Your Best-Fit Strategy** — matched to your goals and timeline
-💰 **Your Full Pricing Path** — across all four selling scenarios
-🔧 **Key Prep Items** — ranked by impact on your bottom line
-✨ **Your Home's Strongest Selling Points** — what to highlight to buyers
-🗓️ **A Practical Roadmap** — from today to closing day
-
-👉 **In your case, it would focus on [1–2 sentence personalized summary].**
-
----
-**Would you like us to put that together for you?**
-A) ✅ Yes — I'd like the Playbook
-B) No thanks
+It organizes everything into a clear seller plan:
+🏠 **Your best-fit strategy** — matched to your goals and timeline
+💰 **Your pricing path** — across all four scenarios
+🔧 **Key prep items** — ranked by impact
+✨ **Your home's strongest points** — what to highlight to buyers
 🗓️ **A practical roadmap** — from now to closing
 
 In your case, it would focus on [1–2 sentence personalized summary].
@@ -488,7 +472,7 @@ After the closing } immediately output the S18 sign-off on the next line. No sep
 CRITICAL: If you output sign-off text before the JSON, the delivery system will fail. JSON FIRST. Always.
 
 S18 — SESSION CLOSE (mandatory — always follows JSON in same response)
-Playbook Yes: "Your Personalized Market-Ready Playbook™ is being prepared and will be sent to [seller_email] shortly. That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
+Playbook Yes: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 Playbook No: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team may be in touch with additional insight from your consultation. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 
 MARKET NARRATIVE
@@ -667,38 +651,29 @@ C) Lower than I expected
 D) I have questions first"
 
 Store seller_temperature (letter only).
-
-INCOMING S14 REPLY HANDLER — If the seller's message is A, B, C, or D (or close variants like "a", "b", "c", "d", "option a", "about what i expected", etc.), treat it as their S14 temperature answer. DO NOT ask any follow-up questions. Respond with the exact S14 reply below, then IMMEDIATELY continue into S15 in the SAME response. Never stop between S14 reply and S15.
-
 A — respond exactly: "Good to hear — sounds like the analysis lines up with your sense of the market."
 B — respond exactly: "That's great to hear — the updates and market conditions are working in your favor."
 C — respond exactly: "The ranges reflect current market conditions and the home's condition profile. The good news is that targeted preparation often has a meaningful impact on where you land within those ranges."
 D — ask: "Of course — what question would you have?" Wait. Answer in 2–4 sentences. Then in SAME response: "Sam and his team can go deeper on this when they follow up." Then deliver S15 in same response.
-
-MANDATORY: After delivering the A, B, or C reply — continue immediately into S15 in the same response. Do not pause. Do not ask if they want to continue. Do not wait for seller input. S15 follows S14 automatically every time.
+After A, B, or C response — immediately deliver S15 in same response. Never wait for seller input between S14 and S15.
 
 S15 — PLAYBOOK OFFER
 Deliver immediately after S14 response. Never skip. Never wait for seller input.
 
----
-## 🎁 You Qualify for a Personalized Market-Ready Playbook™
+"Based on everything you've shared, [First] — we can put together a Personalized Market-Ready Playbook™ for your home.
 
-**[First], based on everything you've shared — we can put together a custom Playbook for your home at no cost.**
+It organizes everything into a clear seller plan:
+🏠 **Your best-fit strategy** — matched to your goals and timeline
+💰 **Your pricing path** — across all four scenarios
+🔧 **Key prep items** — ranked by impact
+✨ **Your home's strongest points** — what to highlight to buyers
+🗓️ **A practical roadmap** — from now to closing
 
-Here's what's inside:
+In your case, it would focus on [1–2 sentence personalized summary].
 
-🏠 **Your Best-Fit Strategy** — matched to your goals and timeline
-💰 **Your Full Pricing Path** — across all four selling scenarios
-🔧 **Key Prep Items** — ranked by impact on your bottom line
-✨ **Your Home's Strongest Selling Points** — what to highlight to buyers
-🗓️ **A Practical Roadmap** — from today to closing day
-
-👉 **In your case, it would focus on [1–2 sentence personalized summary].**
-
----
-**Would you like us to put that together for you?**
-A) ✅ Yes — I'd like the Playbook
-B) No thanks
+Would you like us to put that together?
+A) Yes — I'd like the Playbook
+B) No thanks"
 
 Yes → playbook_requested="true" | consent_to_contact="yes" → S16
 No → playbook_requested="false" | consent_to_contact="no" → S17
@@ -736,7 +711,7 @@ JSON FIRST. Always. If you output anything before { the delivery fails.
 garage_spaces MUST be exactly "0", "1", "2", or "3" — single digit from seller's answer. Never concatenate with bathrooms or any other value.
 
 S18 — SESSION CLOSE
-Playbook Yes: "Your Personalized Market-Ready Playbook™ is being prepared and will be sent to [seller_email] shortly. That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
+Playbook Yes: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 Playbook No: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team may be in touch with additional insight from your consultation. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 
 ADVISOR TONE: Professional, calm, consultative. The homeowner always decides.`;
@@ -907,9 +882,7 @@ function addMessage(role, text) {
     .replace(/>/g,"&gt;")
     .replace(/\n/g,"<br>")
     .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-    .replace(/__(.*?)__/g,"<b>$1</b>")
-    .replace(/^##\s(.+)/gm,"<div style='font-size:1.08em;font-weight:700;margin:6px 0 4px;'>$1</div>")
-    .replace(/---/g,"<hr style='border:none;border-top:1px solid rgba(0,0,0,0.12);margin:8px 0;'>");
+    .replace(/__(.*?)__/g,"<b>$1</b>");
   const wrap = document.createElement("div");
   wrap.style.cssText = "max-width:80%;min-width:0;flex:1;";
   wrap.appendChild(bubble);
@@ -946,9 +919,7 @@ function typewriteMessage(text, speedMs = 18) {
     .replace(/>/g,"&gt;")
     .replace(/\n/g,"<br>")
     .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-    .replace(/__(.*?)__/g,"<b>$1</b>")
-    .replace(/^##\s(.+)/gm,"<div style='font-size:1.08em;font-weight:700;margin:6px 0 4px;'>$1</div>")
-    .replace(/---/g,"<hr style='border:none;border-top:1px solid rgba(0,0,0,0.12);margin:8px 0;'>");
+    .replace(/__(.*?)__/g,"<b>$1</b>");
 
   // Split into HTML-aware chunks (preserve tags, type char by char for text)
   let i = 0;
@@ -1182,48 +1153,6 @@ function tryCaptureName(text) {
   // Fallback: just first name
   const m2 = text.match(/Thanks(?:,)?\s+([A-Z][a-z]+)\./);
   if (m2) capturedSellerName = m2[1].trim();
-}
-
-// ── ST Summary injection for Confirm/JSON turn ───────────────────────────────
-// On the Confirm turn, instead of relying on GPT-4o to reconstruct all seller
-// data from 20+ turns of conversation history, we inject a compact verified
-// data block directly into the system prompt. This keeps the Confirm turn
-// well under 15,000 tokens regardless of session length — eliminating the
-// 30,000 token wall permanently without trimming any conversation data.
-function buildSTSummary() {
-  const lines = ["[VERIFIED SESSION DATA — use these exact values for all JSON fields. These override anything in conversation history.]"];
-
-  // Seller identity
-  if (capturedSellerName) lines.push(`SELLER NAME: ${capturedSellerName}`);
-  if (ST.seller_email)    lines.push(`SELLER EMAIL: ${ST.seller_email}`);
-
-  // Property address
-  if (ST.property_address) lines.push(`PROPERTY ADDRESS: ${ST.property_address}`);
-  if (ST.city)    lines.push(`CITY: ${ST.city}`);
-  if (ST.state)   lines.push(`STATE: ${ST.state}`);
-  if (ST.zip_code) lines.push(`ZIP: ${ST.zip_code}`);
-
-  // Property details from RentCast
-  if (ST.bedrooms)         lines.push(`BEDROOMS: ${ST.bedrooms}`);
-  if (ST.bathrooms)        lines.push(`BATHROOMS: ${ST.bathrooms}`);
-  if (ST.living_area_sqft) lines.push(`LIVING AREA: ${ST.living_area_sqft}`);
-  if (ST.lot_size)         lines.push(`LOT SIZE: ${ST.lot_size}`);
-  if (ST.year_built)       lines.push(`YEAR BUILT: ${ST.year_built}`);
-  if (ST.property_type)    lines.push(`PROPERTY TYPE: ${ST.property_type}`);
-  if (ST.garage_spaces)    lines.push(`GARAGE SPACES: ${ST.garage_spaces}`);
-
-  // Valuation
-  if (ST.estimated_value_low)   lines.push(`AVM ESTIMATED VALUE: ${ST.estimated_value_low}`);
-  if (ST.estimated_value_range) lines.push(`AVM PRICE RANGE: ${ST.estimated_value_range}`);
-  if (ST.price_low)  lines.push(`AVM PRICE LOW: $${Number(ST.price_low).toLocaleString()}`);
-  if (ST.price_high) lines.push(`AVM PRICE HIGH: $${Number(ST.price_high).toLocaleString()}`);
-
-  // Financial goals
-  if (ST.loan_balance)      lines.push(`LOAN BALANCE: ${ST.loan_balance}`);
-  if (ST.net_proceeds_goal) lines.push(`NET PROCEEDS GOAL: ${ST.net_proceeds_goal}`);
-
-  lines.push("[END VERIFIED SESSION DATA]");
-  return lines.join("\n");
 }
 
 // ── Loan balance capture from Claude's confirmation ─────────────────────────
@@ -1462,25 +1391,15 @@ async function callClaude(userMessage, imageData) {
   }
 
   // Use higher token limit — JSON payload needs ~2000 tokens minimum
-  // Detect the "Confirm" turn — only fires when seller clicks Authorize/Ready
-  // after S17 Human Handoff. Must be very specific to avoid false triggers
-  // on mid-session single-letter answers like "a", "b", "c".
+  // Detect the "Confirm" turn (seller clicks Authorize/Ready) — needs 4000 tokens for JSON + sign-off
   const lastUserMsg = conversationHistory[conversationHistory.length - 1];
   const lastUserText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content.trim().toLowerCase() : "";
-  
-  // Only trigger on explicit Authorize/Confirm signals — NOT on single letters mid-session
-  // The Authorize step presents "A) Understood / B) I'm Ready" ONLY at S17 handoff
-  // We gate on analysisDelivered to ensure we're past S13 before treating A/B as confirm
-  const isConfirmTurn = analysisDelivered && (
-    /\b(i'm ready|i am ready|authorize delivery|authorize|confirm)\b/.test(lastUserText)
-    || lastUserText === "b" || lastUserText === "a" || lastUserText === "understood"
-  );
-
-  // ST summary injection removed — was causing estimated_value_range and smart_sale_score
-  // to arrive as empty strings in the JSON because those fields are assembled by GPT-4o
-  // during S13 and are not stored in the ST object. Token budget is managed by claude.js.
+  const isConfirmTurn = /\b(i'm ready|understood|authorize|confirm|ready)\b/.test(lastUserText)
+    || lastUserText === "b" || lastUserText === "a";
   const isAutoTrigger = userMessage === "__AUTO_TRIGGER_ANALYSIS__";
-  const maxTokens = sessionComplete ? 1200 : (isConfirmTurn ? 4000 : (isAutoTrigger ? 3000 : 1500));
+  // JSON assembly turn needs full 4000 tokens regardless of sessionComplete state.
+  // 1200 was cutting off the 60-field JSON mid-output, leaving GPT-generated fields blank.
+  const maxTokens = (sessionComplete || isConfirmTurn) ? 4000 : (isAutoTrigger ? 3000 : 1500);
 
   // ── Image payload handling ───────────────────────────────────────────────
   // Netlify functions have a ~1MB body limit — base64 images blow past this.
@@ -1626,7 +1545,7 @@ async function callClaude(userMessage, imageData) {
           const firstName = (capturedSellerName || payload.seller_name || "").split(" ")[0] || "there";
           const playbook = payload.playbook_requested === "true";
           const signOff = playbook
-            ? `Your Personalized Market-Ready Playbook™ is being prepared and will be sent to ${ST.seller_email || "your email"} shortly.\nThat wraps up your Smart Sale Strategy session, ${firstName}.\nSam Zieour and the SZ Real Estate Group team will be in touch from there.\nThis concludes our session — we appreciate you taking the time, and wish you all the best with your next move.`
+            ? `That wraps up your Smart Sale Strategy session, ${firstName}.\nSam Zieour and the SZ Real Estate Group team will be in touch from there.\nThis concludes our session — we appreciate you taking the time, and wish you all the best with your next move.`
             : `That wraps up your Smart Sale Strategy session, ${firstName}.\nSam Zieour and the SZ Real Estate Group team may be in touch with additional insight from your consultation.\nThis concludes our session — we appreciate you taking the time, and wish you all the best with your next move.`;
           return signOff;
         }
