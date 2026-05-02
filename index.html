@@ -465,19 +465,17 @@ Distressed + Yes → sam_connect="A" + warmer acknowledgment
 
 STEP A — assemble full 60-field JSON silently. session_completed="true".
 
-STEP B — deliver response:
-Yes/Distressed Yes: "Great — I'll make sure Sam has everything from this consultation.\n\nHere's what happens next:\n✅ Your session details and analysis are ready to send\n✅ Sam will receive a full summary\n✅ Your Playbook™ will be delivered to [email]\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready"
-Maybe: "No problem — Sam is available anytime you're ready.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready"
-No: "Understood. Sam's team is at Sam@szrealestategroup.com if questions come up.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready"
+STEP B — deliver response based on sam_connect answer, then IMMEDIATELY output JSON + S18 in same response:
+Yes/Distressed Yes: "Great — I'll make sure Sam has everything from this consultation.\n\nHere's what happens next:\n✅ Your session details and analysis are ready to send\n✅ Sam will receive a full summary\n✅ Your Playbook™ will be delivered to [email]"
+Maybe: "No problem — Sam is available anytime you're ready.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]"
+No: "Understood. Sam's team is at Sam@szrealestategroup.com if questions come up.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]"
 
-STEP C — when seller responds A, B, or any affirmative to the AUTHORIZE DELIVERY prompt:
-YOUR ENTIRE RESPONSE MUST START WITH THE JSON OBJECT. No preamble. No greeting. No acknowledgment. The very first character of your response must be {
-Output the complete 60-field JSON object. Start with { and end with }.
-After the closing } immediately output the S18 sign-off on the next line. No separator, no blank line, just the sign-off text.
-CRITICAL: If you output sign-off text before the JSON, the delivery system will fail. JSON FIRST. Always.
+After delivering the STEP B response — immediately output the complete JSON + S18 in the same response.
+YOUR ENTIRE JSON MUST START WITH {. No preamble before the JSON. Output the complete 60-field JSON object. After } immediately output the S18 sign-off. No separator, no blank line.
+CRITICAL: JSON FIRST after STEP B text. Always.
 
 S18 — SESSION CLOSE (mandatory — always follows JSON in same response)
-Playbook Yes: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
+Playbook Yes: "Your Personalized Market-Ready Playbook™ is being prepared and will be sent to [seller_email] shortly. That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 Playbook No: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team may be in touch with additional insight from your consultation. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 
 MARKET NARRATIVE
@@ -705,23 +703,23 @@ B) Maybe later
 C) No thanks"
 
 Yes → human_handoff="yes" | sam_connect="A"
-Deliver exactly: "Great — I'll make sure Sam has everything from this consultation.\n\nHere's what happens next:\n✅ Your session details and analysis are ready to send\n✅ Sam will receive a full summary\n✅ Your Playbook™ will be delivered to [email]\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready"
+Deliver exactly: "Great — I'll make sure Sam has everything from this consultation.\n\nHere's what happens next:\n✅ Your session details and analysis are ready to send\n✅ Sam will receive a full summary\n✅ Your Playbook™ will be delivered to [email]"
+Then IMMEDIATELY output JSON + S18 in the same response.
 
 Maybe → human_handoff="maybe" | sam_connect="B"
-Deliver exactly: "No problem — Sam is available anytime you're ready.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready"
+Deliver exactly: "No problem — Sam is available anytime you're ready.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]"
+Then IMMEDIATELY output JSON + S18 in the same response.
 
 No → human_handoff="no" | sam_connect="C"
-Deliver exactly: "Understood. Sam's team is at Sam@szrealestategroup.com if questions come up.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready"
+Deliver exactly: "Understood. Sam's team is at Sam@szrealestategroup.com if questions come up.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to [email]"
+Then IMMEDIATELY output JSON + S18 in the same response.
 
-STEP C — when seller responds A, B, or any affirmative to AUTHORIZE DELIVERY:
-YOUR ENTIRE RESPONSE MUST START WITH {
-Output the complete 60-field JSON. Start with { end with }.
-After } immediately output S18 on next line. No separator, no blank line.
-JSON FIRST. Always. If you output anything before { the delivery fails.
+OUTPUT ORDER: STEP B response text → then { JSON } → then S18 sign-off. All in one response.
+YOUR JSON MUST START WITH {. No preamble before {. JSON FIRST after STEP B text. Always.
 garage_spaces MUST be exactly "0", "1", "2", or "3" — single digit from seller's answer. Never concatenate with bathrooms or any other value.
 
 S18 — SESSION CLOSE
-Playbook Yes: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
+Playbook Yes: "Your Personalized Market-Ready Playbook™ is being prepared and will be sent to [seller_email] shortly. That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team will be in touch from there. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 Playbook No: "That wraps up your Smart Sale Strategy session, [First]. Sam Zieour and the SZ Real Estate Group team may be in touch with additional insight from your consultation. This concludes our session — we appreciate you taking the time, and wish you all the best with your next move."
 
 ADVISOR TONE: Professional, calm, consultative. The homeowner always decides.`;
@@ -1440,11 +1438,13 @@ async function callClaude(userMessage, imageData) {
   }
 
   // Use higher token limit — JSON payload needs ~2000 tokens minimum
-  // Detect the "Confirm" turn (seller clicks Authorize/Ready) — needs 4000 tokens for JSON + sign-off
+  // Detect the JSON assembly turn — now S17 handoff answer triggers JSON directly
+  // (Authorize Delivery step removed — Yes/Maybe/No to Sam Connect fires JSON)
   const lastUserMsg = conversationHistory[conversationHistory.length - 1];
   const lastUserText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content.trim().toLowerCase() : "";
-  const isConfirmTurn = /\b(i'm ready|understood|authorize|confirm|ready)\b/.test(lastUserText)
-    || lastUserText === "b" || lastUserText === "a";
+  const isConfirmTurn = (handoffAsked && /^[abc]$/i.test(lastUserText.trim()))
+    || /connect me with sam|maybe later|no thanks/i.test(lastUserText)
+    || sessionComplete;
   const isAutoTrigger = userMessage === "__AUTO_TRIGGER_ANALYSIS__";
   // JSON assembly turn needs full 4000 tokens regardless of sessionComplete state.
   // 1200 was cutting off the 60-field JSON mid-output, leaving GPT-generated fields blank.
@@ -1677,17 +1677,13 @@ async function callClaude(userMessage, imageData) {
       console.log("Enforcing S17 — handoff question was skipped");
       const handoffMsg = `Thanks for walking through the Smart Sale Strategy Tool with me.\n\nThe analysis provides a strategic estimate based on today's information — every property has nuances that influence the final outcome.\n\nSam Zieour and his team at SZ Real Estate Group can review your details and refine these ranges when you're ready to move forward. No obligation.\n\nWould you like me to connect you with Sam?\nA) Yes, connect me with Sam\nB) Maybe later\nC) No thanks`;
       handoffAsked = true;
-      conversationHistory.push({ role: "assistant", content: handoffMsg });
+      if (conversationHistory.length > 0 &&
+          conversationHistory[conversationHistory.length - 1].role === "assistant") {
+        conversationHistory[conversationHistory.length - 1].content = handoffMsg;
+      } else {
+        conversationHistory.push({ role: "assistant", content: handoffMsg });
+      }
       return handoffMsg;
-    }
-
-    // STEP B Authorize was skipped — inject it
-    if (handoffAnswered && !authorizeShown) {
-      console.log("Enforcing STEP B — Authorize Delivery was skipped");
-      const authorizeMsg = `No problem — Sam is available anytime you're ready.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to ${ST.seller_email || "your email"}\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready`;
-      authorizeShown = true;
-      conversationHistory.push({ role: "assistant", content: authorizeMsg });
-      return authorizeMsg;
     }
   }
 
