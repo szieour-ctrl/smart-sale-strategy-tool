@@ -733,6 +733,16 @@ const PABBLY_WEBHOOK      = "https://connect.pabbly.com/workflow/sendwebhookdata
 let conversationHistory = [];
 let sessionComplete      = false;
 let analysisDelivered    = false;
+// ── S14-S18 flow enforcement flags ────────────────────────────────────────
+// These prevent the LLM from skipping steps by enforcing them client-side.
+let temperatureAsked     = false;  // S14 question delivered
+let temperatureAnswered  = false;  // seller replied A/B/C/D
+let playbookOffered      = false;  // S15 Playbook offer delivered
+let playbookAnswered     = false;  // seller replied Yes/No
+let emailCaptured        = false;  // S16 email collected
+let handoffAsked         = false;  // S17 Sam Connect question delivered
+let handoffAnswered      = false;  // seller replied A/B/C
+let authorizeShown       = false;  // STEP B Authorize Delivery shown
 let capturedSellerName   = "";
 let awaitingLookup       = false;
 let propertyDataCache    = null;
@@ -1474,6 +1484,17 @@ async function callClaude(userMessage, imageData) {
   tryCaptureLoanData(assistantText);
 
   // ── Smart Sale Score capture — locks value from S13 analysis response ───
+  if (!ST.smart_sale_score) {
+    const scoreMatch = assistantText.match(/smart sale score[^0-9]*([0-9]{1,3})/i)
+      || assistantText.match(/score[^0-9]*:\s*([0-9]{1,3})/i);
+    if (scoreMatch) {
+      const score = parseInt(scoreMatch[1]);
+      if (score >= 0 && score <= 100) {
+        ST.smart_sale_score = String(score);
+        console.log("Smart Sale Score captured from response:", ST.smart_sale_score);
+      }
+    }
+  }
   // Score is calculated silently by GPT-4o in S13 and appears in the JSON.
   // We also watch for it in Claude's response text as a backup.
   if (!ST.smart_sale_score) {
@@ -1491,6 +1512,37 @@ async function callClaude(userMessage, imageData) {
   // ── Analysis delivery detection ────────────────────────────────────────
   if (!analysisDelivered && /\U0001f3e0.*Cash Offer|\U0001f3e1.*Sell As-Is/i.test(assistantText)) {
     analysisDelivered = true;
+  }
+
+  // ── S14 temperature question detection ─────────────────────────────────
+  if (analysisDelivered && !temperatureAsked &&
+      /how does that compare.*expecting/i.test(assistantText)) {
+    temperatureAsked = true;
+  }
+
+  // ── S15 Playbook offer detection ────────────────────────────────────────
+  if (analysisDelivered && !playbookOffered &&
+      /personalized market-ready playbook/i.test(assistantText) &&
+      /yes.*playbook|no thanks/i.test(assistantText)) {
+    playbookOffered = true;
+  }
+
+  // ── S16 email capture detection ─────────────────────────────────────────
+  if (playbookOffered && !emailCaptured &&
+      /what email address/i.test(assistantText)) {
+    emailCaptured = true;
+  }
+
+  // ── S17 handoff question detection ──────────────────────────────────────
+  if (emailCaptured && !handoffAsked &&
+      /would you like me to connect you with sam/i.test(assistantText)) {
+    handoffAsked = true;
+  }
+
+  // ── STEP B Authorize Delivery detection ─────────────────────────────────
+  if (handoffAsked && !authorizeShown &&
+      /authorize delivery/i.test(assistantText)) {
+    authorizeShown = true;
   }
 
   // ── RentCast intercept ──────────────────────────────────────────────────
@@ -1608,6 +1660,30 @@ async function callClaude(userMessage, imageData) {
   // If Claude outputs the session close without the JSON payload, silently
   // request the JSON in a follow-up call so the webhook still fires.
   const isSignOff = /that wraps up your smart sale strategy session/i.test(assistantText);
+
+  // ── Step enforcement: if sign-off fires before required steps, inject them ──
+  if (isSignOff && !sessionComplete) {
+    const firstName = (capturedSellerName || "").split(" ")[0] || "there";
+
+    // S17 Sam Connect was skipped — inject it
+    if (emailCaptured && !handoffAsked) {
+      console.log("Enforcing S17 — handoff question was skipped");
+      const handoffMsg = `Thanks for walking through the Smart Sale Strategy Tool with me.\n\nThe analysis provides a strategic estimate based on today's information — every property has nuances that influence the final outcome.\n\nSam Zieour and his team at SZ Real Estate Group can review your details and refine these ranges when you're ready to move forward. No obligation.\n\nWould you like me to connect you with Sam?\nA) Yes, connect me with Sam\nB) Maybe later\nC) No thanks`;
+      handoffAsked = true;
+      conversationHistory.push({ role: "assistant", content: handoffMsg });
+      return handoffMsg;
+    }
+
+    // STEP B Authorize was skipped — inject it
+    if (handoffAnswered && !authorizeShown) {
+      console.log("Enforcing STEP B — Authorize Delivery was skipped");
+      const authorizeMsg = `No problem — Sam is available anytime you're ready.\n\nHere's what happens next:\n✅ Your session details are ready to send\n✅ Your Playbook™ will be delivered to ${ST.seller_email || "your email"}\n\n⬇️ To **AUTHORIZE DELIVERY** of your Personalized Market-Ready Playbook™ you will need to click **Confirm** — it will take just a moment to appear, so don't go anywhere, okay?\n\nA) Understood\nB) I'm Ready`;
+      authorizeShown = true;
+      conversationHistory.push({ role: "assistant", content: authorizeMsg });
+      return authorizeMsg;
+    }
+  }
+
   if (isSignOff && !sessionComplete) {
     console.log("Sign-off detected without JSON — firing silent JSON recovery call");
     (async () => {
@@ -1677,6 +1753,17 @@ async function handleSend() {
   // Capture email if input looks like one
   if (!ST.seller_email && text.includes("@") && text.includes(".")) {
     ST.seller_email = text.trim();
+    if (playbookOffered) emailCaptured = true;
+  }
+  // Track S14 temperature answer
+  if (temperatureAsked && !temperatureAnswered &&
+      /^[abcd]$/i.test(text.trim()) || /about what|higher|lower|questions/i.test(text)) {
+    temperatureAnswered = true;
+  }
+  // Track S17 handoff answer
+  if (handoffAsked && !handoffAnswered &&
+      /^[abc]$/i.test(text.trim()) || /connect me|maybe later|no thanks/i.test(text)) {
+    handoffAnswered = true;
   }
   addMessage("user", text);
   showTyping();
