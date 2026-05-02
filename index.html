@@ -251,7 +251,7 @@ Use formatted_address from RentCast as property_address. Never use seller's type
 After confirmation — required acknowledgment first: "Got it — [X]-bed, [X]-bath, [X,XXX] sq ft [type] built in [year] confirmed." Then if seller also asked a premature value question in the same message, deliver the valuation gate bridge. Then ask separately, one turn each:
 • "Is the home single-story or two-story?"
 • "How many garage spaces? A) 1 car  B) 2 car  C) 3 car  D) No garage" → store number only: "1","2","3","0"
-• "Any additional features? A) Pool or spa  B) ADU or guest unit  C) Corner lot  D) Notable view  E) None" → ask "Any others?" after first answer → store comma-separated
+• "Any additional features? A) Pool or spa  B) ADU or guest unit  C) Corner lot  D) Notable view  E) None" → capture ALL features from the seller's reply including any freetext (e.g. "gated community", "outdoor kitchen") in the SAME message — do NOT ask "Any others?" if freetext was already provided. Only ask "Any others?" if the reply contained only letter options with no additional text. Store all features comma-separated including freetext amenities.
 
 S4 — STRUCTURAL SYSTEMS
 Read HOME AGE from [RENTCAST_PROPERTY_DATA]. Never calculate — use the injected value.
@@ -1012,10 +1012,17 @@ function setInputState(enabled) {
 
 async function sendToWebhook(jsonPayload) {
   try {
+    // Sanitize all string fields — apostrophes in text break Pabbly Step 3 JS
+    // string literals when Pabbly substitutes variables before code runs.
+    // Replace straight apostrophes with a typographic right single quote (U+2019)
+    // which renders correctly in PDFs and doesn't break JS string parsing.
+    const sanitized = JSON.parse(
+      JSON.stringify(jsonPayload).split("'").join("\u2019")
+    );
     await fetch(PABBLY_WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(jsonPayload),
+      body: JSON.stringify(sanitized),
       mode: "no-cors"
     });
   } catch(e) {
